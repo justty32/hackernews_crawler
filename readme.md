@@ -1,53 +1,42 @@
-# Hacker News 留言智慧彙報器 (HN Intelligence Reporter)
+# Hacker News 智慧技術動向追蹤器
 
-這是一個結合 Python 抓取、LLM 總結、持續監控與 AI 興趣過濾的整合工具，專為高效吸收 Hacker News 技術動向而設計。
+本專案結合 Python 抓取、LLM 總結、持續監控與多階段 AI 過濾，幫助您精確捕捉 Hacker News 上的專業見解。
 
-## 🌟 核心特色
+## 🚀 三層過濾機制 (Triple-Filtering)
 
-- **智慧抓取：** 支援多種過濾條件（關鍵字、熱門排名、留言數門檻）。
-- **LLM 總結：** 自動提取冗長留言中的核心觀點。
-- **自動化監控：** 背景監控資料夾，並在偵測到新文章總結時，自動進行後續評估。
-- **AI 興趣過濾：** 由 AI 代勞評估內容是否符合您的「興趣 Profile」，實現精準提醒。
-- **Email 通知：** 偵測到感興趣的文章時，自動發送 Email，第一時間掌握重要資訊。
+1.  **基礎篩選：** 根據「標題關鍵字」與「留言數門檻」進行初步篩選。
+2.  **關鍵字比對：** 檢查「AI 總結內容」與「原始留言全文」是否包含指定的興趣關鍵字。
+3.  **AI 專家檢查：** 調用 AI Agent，根據您提供的自定義 Prompt（如：*「檢查是否有專業人士的實作經驗分享」*）進行最後審核。
 
-## 🚀 快速開始
+## 📢 通知管道 (Notification Channels)
 
-### 1. 安裝與設定
-```bash
-# 安裝依賴
-pip install -r requirements.txt
+-   **Email 通知：** 第一時間將文章摘要、連結、留言數與 AI 評估原因寄送至您的信箱。
+-   **檔案儲存：** 自動將通知內容存入 `data/notifications/`，方便離線查閱或整合其他自動化工具。
+-   **未來擴充：** 預留 Telegram, Line 與 雲端儲存 (Google Drive) 的配置介面。
 
-# 配置環境變數
-cp .env.example .env
-# 請編輯 .env 填入 API Keys 與 SMTP 帳號密碼
+## 🛠️ 配置說明
+
+### 1. 營運設定 (`config.yaml`)
+```yaml
+monitoring:
+  rules:
+    title_keywords: ["AI", "Rust"]   # 標題關鍵字
+    min_comments: 50                 # 留言數門檻
+    expert_check_prompt: "..."       # AI 專家檢查指令
+  channels:
+    email: { enabled: true }         # 啟用郵件
+    file: { enabled: true }          # 啟用檔案存放
 ```
 
-### 2. 調整營運參數 (`config.yaml`)
-- 設定 `raw_dir` 與 `summary_dir`。
-- 在 `crawler` 區塊設定抓取關鍵字與過濾條件。
-- 在 `monitoring.interest_profile` 中填寫您感興趣的技術描述。
-- 設定 `monitoring.email` 的接收者資訊。
+### 2. 環境變數 (`.env`)
+-   `OPENAI_API_KEY`: LLM API 金鑰。
+-   `SMTP_USERNAME` / `SMTP_PASSWORD`: 用於發送通知郵件的帳密。
 
-### 3. 執行程式
+## 🏃 執行方式
 ```bash
-# 單次抓取並總結
-python main.py all
-
-# 啟動持續監控模式 (背景常駐)
+# 啟動監控服務 (會自動觸發過濾與通知)
 python main.py monitor
 
-# 僅執行特定模組
-python main.py crawl      # 僅抓取
-python main.py summarize  # 僅總結
+# 手動執行完整抓取流程
+python main.py all
 ```
-
-## 📂 專案結構
-- `main.py`: 統一入口點。
-- `crawler.py`: 負責抓取與存檔原始資料。
-- `summarizer.py`: 負責將原始內容交給 LLM 生成摘要。
-- `notifier.py`: AI 興趣度評估與郵件通知發送邏輯。
-- `monitor.py`: 常駐服務，監控檔案變動。
-- `utils/config.py`: 設定檔與環境變數載入工具。
-
-## 🤖 推薦 LLM 支援
-本專案使用 [LiteLLM](https://github.com/BerriAI/litellm)，支援 OpenAI, Anthropic, Gemini, Azure 等各大模型供應商。
