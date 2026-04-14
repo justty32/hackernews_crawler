@@ -25,11 +25,22 @@ def check_summary_exists(summary_dir, story_id):
     return False
 
 def summarize_text(title, text, model_cfg, dynamic_cfg=None):
-    """調用 LiteLLM 生成摘要"""
+    """調用 LiteLLM 生成摘要，並確保留言截斷在完整區塊"""
     extra_instruction = get_dynamic_prompt(title, dynamic_cfg)
     
-    # 限制輸入長度 (保留前 8000 字元，通常對留言已足夠)
-    truncated_text = text[:8000]
+    # 智慧截斷邏輯
+    limit = 8000
+    if len(text) > limit:
+        # 尋找 8000 字元前最後一個留言的起始點 (格式為 "\n- ")
+        break_point = text[:limit].rfind("\n- ")
+        if break_point != -1:
+            # 截斷在該留言之前，並加上提示
+            truncated_text = text[:break_point] + "\n\n(Part of comments truncated for length...)"
+        else:
+            # 如果找不到留言格式，則進行硬截斷
+            truncated_text = text[:limit]
+    else:
+        truncated_text = text
     
     prompt = f"""
     請針對以下 Hacker News 文章的留言內容進行簡短總結。

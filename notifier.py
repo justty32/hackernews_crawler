@@ -20,6 +20,12 @@ def evaluate_with_ai(summary_content, raw_content, title, mon_cfg, model_cfg):
     
     dynamic_instruction = "\n".join(extra_prompts) if extra_prompts else ""
     
+    # 智慧截斷原始內容 (防止 Token 超出並確保留言完整)
+    truncated_raw = raw_content[:3000]
+    break_point = truncated_raw.rfind("\n- ")
+    if break_point != -1:
+        truncated_raw = truncated_raw[:break_point]
+    
     prompt = f"""
     你是我的個人 AI 技術顧問。
     請根據我的「專業檢查要求」，評估以下 Hacker News 文章摘要及其完整留言內容。
@@ -32,7 +38,7 @@ def evaluate_with_ai(summary_content, raw_content, title, mon_cfg, model_cfg):
     {summary_content}
     
     部分完整留言:
-    {raw_content[:3000]}
+    {truncated_raw}
     
     評估要求:
     1. 僅回傳 JSON 格式。
