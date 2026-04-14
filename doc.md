@@ -11,6 +11,7 @@
 2.  **Summarizer**: 生成摘要內容 (`data/summary`)。
 3.  **Monitor**: 監控變動並觸發過濾 (`notifier.py`)。
 4.  **Notifier**: 執行三層過濾與多管道通知。
+5.  **Organizer**: 執行資料生命週期管理（壓縮、歸檔）。
 
 ---
 
@@ -18,80 +19,47 @@
 
 ### 2.1 基礎配置: `utils/config.py`
 負責系統的營運參數與敏感資訊加載。
-- **`load_config(config_path)`**: 使用 `PyYAML` 讀取 `config.yaml`。
+- **編碼支援**: 使用 `utf-8-sig` 讀取 `config.yaml`，確保相容 Windows 系統下的 BOM 標頭。
 - **`load_dotenv()`**: 透過 `python-dotenv` 將 `.env` 中的 API Key 加載至環境變數。
-- **設計考量**: 實現「營運參數」與「敏感密鑰」的分離，提高安全性與靈活性。
 
 ### 2.2 資料採集: `crawler.py`
 與 Hacker News API 對接，進行初步過濾。
-- **`fetch_hn_item(item_id)`**:
-    - 使用 `requests.get` 獲取 JSON 資料。
-    - **關鍵點**: 設置了 `timeout=10` 以防網路掛起。
-- **`fetch_comments(item, depth, max_comments)`**:
-    - **遞迴抓取**: 透過 `kids` 欄位深入抓取留言。
-    - **清理**: 簡單清理 HTML 標籤（如 `<p>`, `<i>`），提升後續 LLM 處理效果。
-- **`run_crawler()`**:
-    - **第一層過濾**: 在抓取階段即根據 `top_limit`、`comment_threshold` 與 `keywords` (標題關鍵字) 進行初步篩選，節省 API 調用次數。
-    - **去重**: 檢查 `data/raw/` 是否已存在該文章 ID，避免重複處理。
+- **`fetch_comments(...)`**: 遞迴抓取留言並清理 HTML 標籤。
+- **篩選邏輯**: 支援標題關鍵字（含空列表處理）與留言數門檻篩選。
 
 ### 2.3 內容摘要: `summarizer.py`
 將冗長的留言轉化為精煉的情報。
-- **`summarize_text(title, text, model_cfg)`**:
-    - **LiteLLM 整合**: 調用 `completion` 函數，實作模型無關性。
-    - **Prompt 設計**: 要求 AI 使用繁體中文，列出核心觀點與社群氛圍，並嚴格控制字數。
-- **`run_summarizer()`**:
-    - **結構化儲存**: 自動依據「年-月」建立子資料夾（如 `data/summary/2026-04/`），方便長期歸檔。
+- **內容截斷**: 自動對輸入文本進行 8000 字元的截斷，防止 Token 超出 LLM 限制。
+- **跨月份去重**: 遞迴搜尋 `data/summary` 下的所有月份目錄，確保文章不重複總結。
+- **動態 Prompt**: 支援 `get_dynamic_prompt` 根據標題自動附加專家指令。
 
 ### 2.4 核心大腦: `notifier.py`
-本專案最複雜的邏輯所在地，實作了「三層過濾機制」。
-- **`evaluate_with_ai(...)`**:
-    - **Context Management**: 將前 3000 字的原始內容傳給 AI，確保其有足夠脈絡進行專家評估。
-    - **JSON Robustness**: 
-        - 強制要求 AI 輸出 JSON。
-        - 實作了手動清理 Markdown 代碼區塊 (` ```json `) 的邏輯，防止 `json.loads` 解析失敗。
-- **`process_new_summary(summary_path)`**:
-    - **三層過濾流程**:
-        1.  **基礎屬性檢查**: 比對標題、摘要、留言中的關鍵字。若有設定關鍵字但完全沒對上，則跳過。
-        2.  **門檻檢查**: 再次確認留言總數是否達標。
-        3.  **AI 專家審核**: 呼叫 `evaluate_with_ai`，執行使用者的自定義 Prompt（例如尋找專業人士意見）。
-- **多管道通知實作**:
-    - **`send_email(...)`**: 使用 `smtplib` 進行 TLS 加密傳輸。
-    - **`save_to_file(...)`**: 實作基礎通知管道，將通知內容（含連結、原因、摘要）存為檔案。
+實作「三層過濾機制」與多管道通知。
+- **AI 專家審核**: 
+    - 支援 `category_prompts` 動態注入。
+    - 實作手動 JSON 清理邏輯，提升解析成功率。
+- **通知管道**: 目前支援 Email 發送與 File 檔案儲存。
 
 ### 2.5 背景服務: `monitor.py`
-實現自動化流程的關鍵。
-- **`SummaryHandler(FileSystemEventHandler)`**:
-    - 繼承自 `watchdog`，監聽 `on_created` 事件。
-    - **監控延遲**: 延遲時間現在可透過 `config.yaml` 中的 `monitoring.delay` 進行設定，以確保檔案完全寫入。
+- 基於 `watchdog` 的監控系統。
+- 支援可配置的 `delay` 時間（預設 1 秒），確保檔案寫入完整性。
 
-### 2.6 資料整理: `organizer.py` (New!)
-負責系統資料的長期維護與封存。
-- **自動壓縮**: 超過指定天數（如 30/90 天）的原始資料與摘要會自動轉為 `.zip`。
-- **智慧分類**: 根據文章標題關鍵字，將存檔自動歸類至 AI、Software、Security 等分類子目錄中。
-
-### 2.7 統一入口: `main.py`
-- 新增 `organize` 模式，手動觸發資料清理與封存。
-- 修訂 `all` 模式說明，明確其為 `crawl` 與 `summarize` 的依序執行。
+### 2.6 資料整理: `organizer.py`
+- **自動壓縮**: 超過指定天數的檔案轉為 `.zip`。
+- **安全性**: 先驗證壓縮檔大小再刪除原檔，防止歸檔失敗導致資料遺失。
+- **智慧分類**: 按標題關鍵字自動歸檔至子資料夾。
 
 ---
 
 ## 3. 關鍵技術處理與 Bug 防範 (Critical Fixes)
 
-1.  **網路穩定性**: 所有 `requests` 調用均封裝於 `try-except` 並設有 `timeout`。
-2.  **動態 Prompt 注入**: 
-    - 系統在 `summarize` 與 `evaluate` 階段皆支援根據標題關鍵字自動附加特定領域的 AI 指令（例如「你是 AI 科學家」）。
-    - 實作於 `summarizer.py` 的 `get_dynamic_prompt` 與 `notifier.py` 的 `evaluate_with_ai`。
-2.  **資料解析健壯性**: 
-    - 檔案讀取時若發生編碼或不存在問題，會捕獲異常並記錄，不中斷主流程。
-    - 標題提取採用迴圈比對 `startswith` 而非固定行號，防止檔案格式微調導致的崩潰。
-3.  **AI 回傳處理**:
-    - 針對不同模型（如 GPT-4 vs. Claude）可能帶有的 Markdown 標籤進行預處理。
-    - 提供詳細的 Error Log，包含 AI 回傳的原始內容，方便除錯。
+1.  **編碼相容性**: 解決 Windows 環境下 UTF-8 與 BOM 導致的讀取錯誤。
+2.  **AI 回傳處理**: 處理 Markdown 代碼區塊對 JSON 解析的干擾。
+3.  **邊際情況處理**: 處理空關鍵字清單、超長內容截斷與路徑不存在等異常。
 
 ---
 
 ## 4. 未來擴充建議
 
-- **Database 整合**: 當資料量達到萬級時，建議從檔案系統遷移至 SQLite。
-- **Web UI**: 可建立一個簡單的看板來展示 `data/notifications` 中的內容。
-- **更多的通知管道**: 已在 `config.yaml` 預留 Telegram/Line 欄位，只需在 `notifier.py` 中實作對應的 API 呼叫即可。
+- **Database 整合**: 適合萬級資料量的 SQLite 遷移。
+- **Web UI**: 視覺化展示過濾後的技術情報。

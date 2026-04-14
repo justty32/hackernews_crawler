@@ -19,3 +19,9 @@ AI專家審核這部份的prompt也如同上面那樣，可以用更靈活的方
 - [x] **評估優化**：AI 專家檢查已支援分類特定 Prompt 注入。
 - [x] **監控延遲**：延遲時間已抽離至 `config.yaml`。
 - [x] **模式說明**：已更新 CLI 幫助文本。`crawl`/`summarize`/`organize` 為單次任務，`monitor` 為常駐監控，`all` 為 `crawl` + `summarize`。
+- [x] **系統穩定性與 Bug 修正** (2026-04-14):
+    - 修正 `organizer.py` 的壓縮安全邏輯與標題解析錯誤處理。
+    - 提升 `monitor.py` 與 `crawler.py` 的配置讀取健壯性 (處理空列表與缺失節點)。
+    - `summarizer.py` 增加跨月份目錄的摘要重複檢查與輸入長度截斷 (8000 字元)。
+    - `notifier.py` 同步 AI 呼叫參數，確保與總結邏輯一致。
+    - `utils/config.py` 改用 `utf-8-sig` 以支援 Windows 下的編碼問題。

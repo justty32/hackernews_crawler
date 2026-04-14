@@ -76,9 +76,10 @@ def run_crawler():
         if descendants < crawler_cfg['comment_threshold']:
             continue
             
-        # 2. 關鍵字過濾 (如果有設定)
-        if crawler_cfg.get('keywords'):
-            if not any(kw.lower() in title.lower() for kw in crawler_cfg['keywords']):
+        # 2. 關鍵字過濾 (如果有設定且不為空)
+        keywords = crawler_cfg.get('keywords', [])
+        if keywords:
+            if not any(kw.lower() in title.lower() for kw in keywords):
                 continue
         
         # 檢查是否已下載

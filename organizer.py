@@ -46,35 +46,36 @@ def archive_files(source_dir, days_threshold, archive_root, categories_cfg, pref
         # 嘗試讀取標題以進行分類
         title = filename
         try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                content = f.read()
-                for line in content.split('\n'):
-                    if line.startswith("Title: ") or line.startswith("Original Story: "):
-                        title = line.split(": ", 1)[1]
-                        break
-        except:
-            pass
+            if os.path.exists(filepath):
+                with open(filepath, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if line.startswith("Title: ") or line.startswith("Original Story: "):
+                            parts = line.split(": ", 1)
+                            if len(parts) > 1:
+                                title = parts[1].strip()
+                            break
+        except Exception as e:
+            print(f"Warning: Could not read title from {filename}: {e}")
             
         category = categorize_content(title, categories_cfg)
         category_dir = os.path.join(archive_root, category)
         os.makedirs(category_dir, exist_ok=True)
         
-        # 建立壓縮檔名 (按月份或分類)
-        # 這裡簡單處理：每個檔案轉為一個 zip 或合併？
-        # advice.md 建議是 "拿去弄成 .zip"，這裡採集一個月/分類一個 zip 的做法太複雜，
-        # 先實現單個檔案壓縮後移動，或按類別打包。
-        # 改為：將檔案壓縮到類別目錄下的 zip 中，或者簡單地移動。
-        # 考慮到方便查閱，這裡將舊檔案移動到類別目錄，並定期手動或自動打包該目錄。
-        # 依照指令 "弄成 .zip"，我們將每個檔案個別壓縮。
-        
         zip_filename = f"{os.path.splitext(filename)[0]}.zip"
         zip_path = os.path.join(category_dir, zip_filename)
         
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            zipf.write(filepath, arcname=filename)
+        try:
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                zipf.write(filepath, arcname=filename)
             
-        os.remove(filepath)
-        print(f"Archived: {filename} -> {category}/{zip_filename}")
+            # 確認壓縮檔已建立且大小 > 0 再刪除原檔
+            if os.path.exists(zip_path) and os.path.getsize(zip_path) > 0:
+                os.remove(filepath)
+                print(f"Archived: {filename} -> {category}/{zip_filename}")
+            else:
+                print(f"Error: Zip file {zip_path} creation failed or empty.")
+        except Exception as e:
+            print(f"Error archiving {filename}: {e}")
 
 def run_organizer():
     config = load_config()

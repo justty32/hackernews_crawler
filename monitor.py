@@ -22,7 +22,8 @@ class SummaryHandler(FileSystemEventHandler):
 def run_monitor():
     config = load_config()
     summary_dir = config['paths']['summary_dir']
-    delay = config['monitoring'].get('delay', 1)
+    monitoring_cfg = config.get('monitoring', {})
+    delay = monitoring_cfg.get('delay', 1)
     os.makedirs(summary_dir, exist_ok=True)
     
     event_handler = SummaryHandler(delay=delay)

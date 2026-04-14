@@ -46,7 +46,9 @@ def evaluate_with_ai(summary_content, raw_content, title, mon_cfg, model_cfg):
             model=model_cfg['model'],
             messages=[{"role": "system", "content": "You are a helpful assistant that outputs JSON."},
                       {"role": "user", "content": prompt}],
-            api_base=model_cfg.get('api_base')
+            api_base=model_cfg.get('api_base'),
+            max_tokens=model_cfg.get('max_tokens', 500),
+            temperature=model_cfg.get('temperature', 0.1) # 評估時通常使用較低的 temperature
         )
         content = response.choices[0].message.content
         

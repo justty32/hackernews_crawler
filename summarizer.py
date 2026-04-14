@@ -15,9 +15,21 @@ def get_dynamic_prompt(title, dynamic_cfg):
             extra_prompts.append(extra_prompt)
     return "\n".join(extra_prompts) if extra_prompts else ""
 
+def check_summary_exists(summary_dir, story_id):
+    """檢查各月份目錄下是否已存在該摘要"""
+    if not os.path.exists(summary_dir):
+        return False
+    for root, dirs, files in os.walk(summary_dir):
+        if f"summary_{story_id}.txt" in files:
+            return True
+    return False
+
 def summarize_text(title, text, model_cfg, dynamic_cfg=None):
     """調用 LiteLLM 生成摘要"""
     extra_instruction = get_dynamic_prompt(title, dynamic_cfg)
+    
+    # 限制輸入長度 (保留前 8000 字元，通常對留言已足夠)
+    truncated_text = text[:8000]
     
     prompt = f"""
     請針對以下 Hacker News 文章的留言內容進行簡短總結。
@@ -25,7 +37,7 @@ def summarize_text(title, text, model_cfg, dynamic_cfg=None):
     文章標題: {title}
     
     留言內容:
-    {text}
+    {truncated_text}
     
     總結要求:
     1. 繁體中文總結。
@@ -67,19 +79,19 @@ def run_summarizer():
     for filename in raw_files:
         story_id = filename.replace(".txt", "")
         
-        # 依據月份建立子目錄
+        # 檢查是否已存在摘要 (搜尋所有月份)
+        if check_summary_exists(summary_dir, story_id):
+            continue
+            
+        print(f"Summarizing story {story_id}...")
+        
+        # 依據月份建立子目錄 (存檔時使用當前月份)
         month_str = datetime.now().strftime("%Y-%m")
         target_month_dir = os.path.join(summary_dir, month_str)
         os.makedirs(target_month_dir, exist_ok=True)
         
-        # 檢查是否已存在摘要
         summary_filename = f"summary_{story_id}.txt"
         summary_path = os.path.join(target_month_dir, summary_filename)
-        
-        if os.path.exists(summary_path):
-            continue
-            
-        print(f"Summarizing story {story_id}...")
         
         # 讀取原始內容
         try:
