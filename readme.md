@@ -49,3 +49,6 @@ python main.py organize
 # 手動執行完整抓取流程
 python main.py all
 ```
+
+## 🤖 AI Agent 整合 (Agent Integration)
+若您是 AI Agent 並準備運作此工具，請參閱 [for_agent.md](./for_agent.md) 獲取詳細的規格與操作規範。

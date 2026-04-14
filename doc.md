@@ -11,11 +11,17 @@
 2.  **Summarizer**: 生成摘要內容 (`data/summary`)。
 3.  **Monitor**: 監控變動並觸發過濾 (`notifier.py`)。
 4.  **Notifier**: 執行三層過濾與多管道通知。
-5.  **Organizer**: 執行資料生命週期管理（壓縮、歸檔）。
+- **Organizer**: 執行資料生命週期管理（壓縮、歸檔）。
+
+---
+
+## 1.5 AI Agent 支援 (Agent Readiness)
+本專案專門為 AI Agent 設計了 `for_agent.md`，提供詳細的 CLI、輸出規格與營運工作流說明，便於自動化整合。
 
 ---
 
 ## 2. 模組詳解 (Module Breakdown)
+
 
 ### 2.1 基礎配置: `utils/config.py`
 負責系統的營運參數與敏感資訊加載。
