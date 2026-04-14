@@ -15,13 +15,16 @@ Python 程式專案（含 AI Agent 評估與多管道通知服務）。
   - `python main.py crawl`: 抓取原始資料。
   - `python main.py summarize`: 生成摘要。
   - `python main.py monitor`: 啟動背景監控與 AI 興趣評估服務。
+  - `python main.py organize`: 整理並壓縮舊資料（按天數與分類）。
   - `python main.py all`: 執行抓取+總結。
 
 ## 設定與安全性規範 (Configuration & Security)
 - **`config.yaml`**:
   - `crawler`: 設定抓取範圍與基礎過濾。
-  - `monitoring.rules`: 設定關鍵字、留言數門檻及 **AI 專家檢查 Prompt**。
-  - `monitoring.channels`: 開關通知管道 (Email, File)。
+  - `summarizer.dynamic_prompts`: 設定特定領域的總結指令。
+  - `monitoring.rules`: 設定基礎過濾規則。
+  - `monitoring.category_prompts`: 設定特定領域的 AI 專家評估指令。
+  - `organizer`: 設定資料封存天數與分類關鍵字。
 - **`.env`**: 存放 API Keys 與 SMTP 憑證。
 
 ## 開發規範 (Development Conventions)

@@ -5,8 +5,20 @@ from datetime import datetime
 from litellm import completion
 from utils.config import load_config, get_env
 
-def summarize_text(title, text, model_cfg):
+def get_dynamic_prompt(title, dynamic_cfg):
+    """根據標題關鍵字獲取額外的 prompt 指令"""
+    extra_prompts = []
+    if not dynamic_cfg:
+        return ""
+    for keyword, extra_prompt in dynamic_cfg.items():
+        if keyword.lower() in title.lower():
+            extra_prompts.append(extra_prompt)
+    return "\n".join(extra_prompts) if extra_prompts else ""
+
+def summarize_text(title, text, model_cfg, dynamic_cfg=None):
     """調用 LiteLLM 生成摘要"""
+    extra_instruction = get_dynamic_prompt(title, dynamic_cfg)
+    
     prompt = f"""
     請針對以下 Hacker News 文章的留言內容進行簡短總結。
     
@@ -20,6 +32,7 @@ def summarize_text(title, text, model_cfg):
     2. 列出 3-5 個核心討論觀點。
     3. 總結社群的整體氛圍 (例如: 贊成、反對、技術性討論等)。
     4. 總結字數控制在 300 字以內。
+    {extra_instruction}
     """
     
     try:
@@ -84,7 +97,8 @@ def run_summarizer():
             continue
         
         # 生成摘要
-        summary = summarize_text(title, content, model_cfg)
+        dynamic_cfg = model_cfg.get('dynamic_prompts', {})
+        summary = summarize_text(title, content, model_cfg, dynamic_cfg)
         
         if summary:
             with open(summary_path, "w", encoding="utf-8") as f:

@@ -7,25 +7,37 @@ from litellm import completion
 from utils.config import load_config, get_env
 from datetime import datetime
 
-def evaluate_with_ai(summary_content, raw_content, expert_prompt, model_cfg):
-    """調用 AI 進行最終興趣與專業度檢查"""
+def evaluate_with_ai(summary_content, raw_content, title, mon_cfg, model_cfg):
+    """調用 AI 進行最終興趣與專業度檢查，支持動態 Prompt"""
+    base_prompt = mon_cfg['rules']['expert_check_prompt']
+    category_prompts = mon_cfg.get('category_prompts', {})
+    
+    # 根據標題注入分類特定的 Prompt
+    extra_prompts = []
+    for category, extra_prompt in category_prompts.items():
+        if category.lower() in title.lower():
+            extra_prompts.append(extra_prompt)
+    
+    dynamic_instruction = "\n".join(extra_prompts) if extra_prompts else ""
+    
     prompt = f"""
     你是我的個人 AI 技術顧問。
     請根據我的「專業檢查要求」，評估以下 Hacker News 文章摘要及其完整留言內容。
     
     專業檢查要求:
-    {expert_prompt}
+    {base_prompt}
+    {dynamic_instruction}
     
     文章摘要:
     {summary_content}
     
     部分完整留言:
-    {raw_content[:3000]}  # 限制長度以節省 Token，但提供足夠脈絡
+    {raw_content[:3000]}
     
     評估要求:
     1. 僅回傳 JSON 格式。
     2. 包含 "passed" (布林值，是否通過檢查) 與 "reason" (繁體中文原因)。
-    3. 如果符合檢查要求，請將 "passed" 設為 true。
+    3. 如果符合檢查要求，請將 "passed"設為 true。
     """
     
     content = ""
@@ -147,7 +159,7 @@ def process_new_summary(summary_path):
 
     # 4. AI 專業檢查
     print(f"Running AI Expert Check for: {title} (Basic matches: {reasons})")
-    ai_eval = evaluate_with_ai(summary_content, raw_content, rules['expert_check_prompt'], model_cfg)
+    ai_eval = evaluate_with_ai(summary_content, raw_content, title, mon_cfg, model_cfg)
     
     if not ai_eval.get('passed'):
         print(f"AI Check Rejected for '{title}': {ai_eval.get('reason')}")

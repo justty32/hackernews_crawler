@@ -6,21 +6,26 @@ from utils.config import load_config
 from notifier import process_new_summary
 
 class SummaryHandler(FileSystemEventHandler):
+    def __init__(self, delay=1):
+        self.delay = delay
+        super().__init__()
+
     def on_created(self, event):
         if event.is_directory:
             return
         if event.src_path.endswith(".txt") and "summary_" in os.path.basename(event.src_path):
             print(f"New summary detected: {event.src_path}")
             # 延遲一下確保檔案寫入完成
-            time.sleep(1)
+            time.sleep(self.delay)
             process_new_summary(event.src_path)
 
 def run_monitor():
     config = load_config()
     summary_dir = config['paths']['summary_dir']
+    delay = config['monitoring'].get('delay', 1)
     os.makedirs(summary_dir, exist_ok=True)
     
-    event_handler = SummaryHandler()
+    event_handler = SummaryHandler(delay=delay)
     observer = Observer()
     observer.schedule(event_handler, summary_dir, recursive=True)
     

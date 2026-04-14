@@ -32,10 +32,19 @@ monitoring:
 -   `OPENAI_API_KEY`: LLM API 金鑰。
 -   `SMTP_USERNAME` / `SMTP_PASSWORD`: 用於發送通知郵件的帳密。
 
+## 🚀 進階功能 (Advanced Features)
+
+1.  **動態 Prompt 注入：** 根據文章類型自動切換 AI 視角（如：AI 科學家、軟體架構師），提供更精準的總結與評估。
+2.  **資料自動封存：** 定期將 `data/raw` 與 `data/summary` 中的舊檔案壓縮為 `.zip` 並按類別（AI/Software/Security）歸檔，保持系統清爽。
+3.  **可調監控延遲：** 支援在設定檔中調整監控延遲，適應不同的磁碟寫入速度。
+
 ## 🏃 執行方式
 ```bash
 # 啟動監控服務 (會自動觸發過濾與通知)
 python main.py monitor
+
+# 整理舊資料 (壓縮並歸檔)
+python main.py organize
 
 # 手動執行完整抓取流程
 python main.py all

@@ -62,19 +62,25 @@
 實現自動化流程的關鍵。
 - **`SummaryHandler(FileSystemEventHandler)`**:
     - 繼承自 `watchdog`，監聽 `on_created` 事件。
-    - **關鍵邏輯**: 偵測到新檔案後延遲 1 秒執行，確保檔案寫入已完全結束。
-- **`run_monitor()`**:
-    - 常駐背景，持續掃描 `data/summary/` 目錄及其子目錄。
+    - **監控延遲**: 延遲時間現在可透過 `config.yaml` 中的 `monitoring.delay` 進行設定，以確保檔案完全寫入。
 
-### 2.6 統一入口: `main.py`
-- 使用 `argparse` 提供 CLI 介面。
-- 支援 `crawl`, `summarize`, `monitor`, `all` 四種模式，方便使用者根據場景切換。
+### 2.6 資料整理: `organizer.py` (New!)
+負責系統資料的長期維護與封存。
+- **自動壓縮**: 超過指定天數（如 30/90 天）的原始資料與摘要會自動轉為 `.zip`。
+- **智慧分類**: 根據文章標題關鍵字，將存檔自動歸類至 AI、Software、Security 等分類子目錄中。
+
+### 2.7 統一入口: `main.py`
+- 新增 `organize` 模式，手動觸發資料清理與封存。
+- 修訂 `all` 模式說明，明確其為 `crawl` 與 `summarize` 的依序執行。
 
 ---
 
 ## 3. 關鍵技術處理與 Bug 防範 (Critical Fixes)
 
 1.  **網路穩定性**: 所有 `requests` 調用均封裝於 `try-except` 並設有 `timeout`。
+2.  **動態 Prompt 注入**: 
+    - 系統在 `summarize` 與 `evaluate` 階段皆支援根據標題關鍵字自動附加特定領域的 AI 指令（例如「你是 AI 科學家」）。
+    - 實作於 `summarizer.py` 的 `get_dynamic_prompt` 與 `notifier.py` 的 `evaluate_with_ai`。
 2.  **資料解析健壯性**: 
     - 檔案讀取時若發生編碼或不存在問題，會捕獲異常並記錄，不中斷主流程。
     - 標題提取採用迴圈比對 `startswith` 而非固定行號，防止檔案格式微調導致的崩潰。
