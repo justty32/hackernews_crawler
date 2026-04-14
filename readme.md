@@ -1,42 +1,53 @@
-# Hacker News 留言下載與智慧彙報器
+# Hacker News 留言智慧彙報器 (HN Intelligence Reporter)
 
-這是一個結合 Python 抓取、LLM 總結、智慧監控與郵件通知的整合工具，幫助您精確掌握感興趣的技術動向。
+這是一個結合 Python 抓取、LLM 總結、持續監控與 AI 興趣過濾的整合工具，專為高效吸收 Hacker News 技術動向而設計。
 
-## 🚀 主要功能
+## 🌟 核心特色
 
-- **多模式抓取：** 支援關鍵字、排行、留言數過濾（可於 `config.yaml` 調整）。
-- **資料分流儲存：**
-  - **原始留言：** 下載為純文字 (.txt)。
-  - **LLM 總結：** 依據 **時間** 與 **類型** 整合，並存放在獨立路徑。
-- **持續監控與智慧提醒：**
-  - 背景監控「彙總資料夾」的變動。
-  - 當新摘要生成時，調用 AI 代理評估是否符合使用者的「興趣 Profile」。
-  - 符合興趣的文章，自動發送 **Email 通知**。
+- **智慧抓取：** 支援多種過濾條件（關鍵字、熱門排名、留言數門檻）。
+- **LLM 總結：** 自動提取冗長留言中的核心觀點。
+- **自動化監控：** 背景監控資料夾，並在偵測到新文章總結時，自動進行後續評估。
+- **AI 興趣過濾：** 由 AI 代勞評估內容是否符合您的「興趣 Profile」，實現精準提醒。
+- **Email 通知：** 偵測到感興趣的文章時，自動發送 Email，第一時間掌握重要資訊。
 
-## 🤖 LLM 與 AI Agent 整合
+## 🚀 快速開始
 
-- **靈活調用：** 支援各種主流 LLM（OpenAI, Anthropic, Gemini...），並可於 `config.yaml` 切換。
-- **興趣過濾：** 透過 Prompt 結合使用者的興趣設定，實現智慧篩選與預警。
+### 1. 安裝與設定
+```bash
+# 安裝依賴
+pip install -r requirements.txt
 
-## 🛠️ 開發與配置 (Configuration)
+# 配置環境變數
+cp .env.example .env
+# 請編輯 .env 填入 API Keys 與 SMTP 帳號密碼
+```
 
-本專案採用 **「營運參數」與「敏感金鑰」分離** 的設計。
+### 2. 調整營運參數 (`config.yaml`)
+- 設定 `raw_dir` 與 `summary_dir`。
+- 在 `crawler` 區塊設定抓取關鍵字與過濾條件。
+- 在 `monitoring.interest_profile` 中填寫您感興趣的技術描述。
+- 設定 `monitoring.email` 的接收者資訊。
 
-### 1. 營運設定 (`config.yaml`)
-包含所有不具備敏感性的設定參數：
-- **路徑設定：** `raw_dir`, `summary_dir` 等。
-- **抓取參數：** 關鍵字清單、過濾閾值、執行頻率。
-- **興趣描述：** `interest_profile` (告訴 AI 你喜歡什麼樣的文章)。
-- **模型設定：** 模型名稱與微調參數。
+### 3. 執行程式
+```bash
+# 單次抓取並總結
+python main.py all
 
-### 2. 敏感資訊 (`.env`)
-需將機密金鑰存於環境變數中，防止外洩：
-- **API Key：** 例如 `OPENAI_API_KEY`, `LITELLM_API_KEY`。
-- **郵件服務：** `SMTP_USERNAME`, `SMTP_PASSWORD`。
+# 啟動持續監控模式 (背景常駐)
+python main.py monitor
 
----
+# 僅執行特定模組
+python main.py crawl      # 僅抓取
+python main.py summarize  # 僅總結
+```
 
-## 🛠️ 開發細節
+## 📂 專案結構
+- `main.py`: 統一入口點。
+- `crawler.py`: 負責抓取與存檔原始資料。
+- `summarizer.py`: 負責將原始內容交給 LLM 生成摘要。
+- `notifier.py`: AI 興趣度評估與郵件通知發送邏輯。
+- `monitor.py`: 常駐服務，監控檔案變動。
+- `utils/config.py`: 設定檔與環境變數載入工具。
 
-- **語言：** Python 3.x
-- **核心依賴：** `litellm`, `watchdog`, `smtplib`, `pyyaml` (讀取設定)。
+## 🤖 推薦 LLM 支援
+本專案使用 [LiteLLM](https://github.com/BerriAI/litellm)，支援 OpenAI, Anthropic, Gemini, Azure 等各大模型供應商。
