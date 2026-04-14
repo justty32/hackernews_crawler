@@ -20,7 +20,7 @@ def evaluate_with_ai(summary_content, raw_content, expert_prompt, model_cfg):
     {summary_content}
     
     部分完整留言:
-    {raw_content[:2000]}  # 限制長度以節省 Token
+    {raw_content[:3000]}  # 限制長度以節省 Token，但提供足夠脈絡
     
     評估要求:
     1. 僅回傳 JSON 格式。
