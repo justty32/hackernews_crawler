@@ -89,7 +89,7 @@ def run_organizer():
     # 整理 raw data
     archive_files(
         source_dir=raw_dir,
-        days_threshold=org_cfg['raw_archive_days'],
+        days_threshold=org_cfg['raw_retention_days'],
         archive_root=os.path.join(archive_dir, "raw"),
         categories_cfg=org_cfg['categories']
     )
@@ -97,7 +97,7 @@ def run_organizer():
     # 整理 summaries
     archive_files(
         source_dir=summary_dir,
-        days_threshold=org_cfg['summary_archive_days'],
+        days_threshold=org_cfg['summary_retention_days'],
         archive_root=os.path.join(archive_dir, "summary"),
         categories_cfg=org_cfg['categories']
     )
