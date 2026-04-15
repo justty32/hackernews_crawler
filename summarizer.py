@@ -3,7 +3,7 @@ import json
 import time
 from datetime import datetime
 from litellm import completion
-from utils.config import load_config, get_env
+from utils.config import load_config, get_env, get_llm_config
 
 def get_dynamic_prompt(title, dynamic_cfg):
     """根據標題關鍵字獲取額外的 prompt 指令"""
@@ -71,42 +71,53 @@ def summarize_text(title, text, model_cfg, dynamic_cfg=None):
         print(f"Error during summarization for '{title}': {e}")
         return None
 
-def run_summarizer():
+def run_summarizer(story_ids=None):
     config = load_config()
     raw_dir = config['paths']['raw_dir']
     summary_dir = config['paths']['summary_dir']
-    model_cfg = config['summarizer']
+    
+    # 獲取專屬 LLM 設定 (根據 'summarizer.provider' 決定)
+    model_cfg = get_llm_config(config, 'summarizer')
     
     os.makedirs(summary_dir, exist_ok=True)
     
-    # 讀取 raw_dir 下的所有檔案
-    if not os.path.exists(raw_dir):
-        print("No raw data to summarize.")
-        return
-        
-    raw_files = [f for f in os.listdir(raw_dir) if f.endswith(".txt")]
+    # 決定要處理的檔案
+    if story_ids:
+        raw_files = [f"{sid}.txt" for sid in story_ids]
+        print(f"Manually summarizing {len(story_ids)} stories: {story_ids}...")
+    else:
+        if not os.path.exists(raw_dir):
+            print("No raw data to summarize.")
+            return
+        raw_files = [f for f in os.listdir(raw_dir) if f.endswith(".txt")]
     
     processed_count = 0
     for filename in raw_files:
-        story_id = filename.replace(".txt", "")
+        current_id = filename.replace(".txt", "")
         
-        # 檢查是否已存在摘要 (搜尋所有月份)
-        if check_summary_exists(summary_dir, story_id):
+        # 如果不是指定 ID 模式，則檢查是否已存在摘要
+        if not story_ids and check_summary_exists(summary_dir, current_id):
             continue
             
-        print(f"Summarizing story {story_id}...")
+        # 檢查原始檔案是否存在
+        raw_path = os.path.join(raw_dir, filename)
+        if not os.path.exists(raw_path):
+            if story_ids: print(f"Error: Raw file for story {current_id} not found.")
+            continue
+
+        print(f"Summarizing story {current_id}...")
         
         # 依據月份建立子目錄 (存檔時使用當前月份)
         month_str = datetime.now().strftime("%Y-%m")
         target_month_dir = os.path.join(summary_dir, month_str)
         os.makedirs(target_month_dir, exist_ok=True)
         
-        summary_filename = f"summary_{story_id}.txt"
+        summary_filename = f"summary_{current_id}.txt"
         summary_path = os.path.join(target_month_dir, summary_filename)
         
         # 讀取原始內容
         try:
-            with open(os.path.join(raw_dir, filename), "r", encoding="utf-8") as f:
+            with open(raw_path, "r", encoding="utf-8") as f:
                 content = f.read()
                 
             # 簡單解析標題
@@ -126,7 +137,7 @@ def run_summarizer():
         if summary:
             with open(summary_path, "w", encoding="utf-8") as f:
                 f.write(f"Original Story: {title}\n")
-                f.write(f"Story ID: {story_id}\n")
+                f.write(f"Story ID: {current_id}\n")
                 f.write(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write("-" * 20 + "\n")
                 f.write(summary)

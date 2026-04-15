@@ -45,11 +45,55 @@ def format_comments_to_text(comments, level=0):
         output += format_comments_to_text(comment['replies'], level + 1)
     return output
 
-def run_crawler():
+def process_story(story_id, config, raw_dir, force=False):
+    """處理並儲存單篇 Story"""
+    story = fetch_hn_item(story_id)
+    if not story:
+        print(f"Failed to fetch story {story_id}")
+        return False
+        
+    title = story.get('title', '')
+    score = story.get('score', 0)
+    descendants = story.get('descendants', 0)
+    url = story.get('url', f"https://news.ycombinator.com/item?id={story_id}")
+    
+    # 檢查是否已下載
+    filename = f"{story_id}.txt"
+    filepath = os.path.join(raw_dir, filename)
+    if not force and os.path.exists(filepath):
+        print(f"Skipping {story_id} (already exists)")
+        return False
+        
+    print(f"Processing Story: {title} ({descendants} comments)")
+    
+    # 抓取留言
+    comments = fetch_comments(story)
+    comments_text = format_comments_to_text(comments)
+    
+    # 寫入檔案
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(f"Title: {title}\n")
+        f.write(f"URL: {url}\n")
+        f.write(f"Score: {score}\n")
+        f.write(f"Comments Count: {descendants}\n")
+        f.write("-" * 20 + "\n")
+        f.write("TOP COMMENTS:\n")
+        f.write(comments_text)
+    return True
+
+def run_crawler(story_ids=None):
     config = load_config()
     raw_dir = config['paths']['raw_dir']
     os.makedirs(raw_dir, exist_ok=True)
     
+    if story_ids:
+        print(f"Manually fetching {len(story_ids)} stories: {story_ids}...")
+        for sid in story_ids:
+            if process_story(sid, config, raw_dir, force=True):
+                print(f"Successfully processed story {sid}")
+            time.sleep(1) # 避免速率限制
+        return
+
     crawler_cfg = config['crawler']
     
     # 取得 Top Stories
@@ -62,51 +106,24 @@ def run_crawler():
         return
     
     processed_count = 0
-    for story_id in top_ids[:crawler_cfg['top_limit']]:
-        story = fetch_hn_item(story_id)
-        if not story: continue
+    for sid in top_ids[:crawler_cfg['top_limit']]:
+        story_data = fetch_hn_item(sid)
+        if not story_data: continue
         
-        title = story.get('title', '')
-        score = story.get('score', 0)
-        descendants = story.get('descendants', 0) # 留言總數
-        url = story.get('url', f"https://news.ycombinator.com/item?id={story_id}")
-        
-        # 篩選條件
-        # 1. 留言數門檻
+        # 篩選條件 (僅在自動模式下套用)
+        descendants = story_data.get('descendants', 0)
         if descendants < crawler_cfg['comment_threshold']:
             continue
             
-        # 2. 關鍵字過濾 (如果有設定且不為空)
         keywords = crawler_cfg.get('keywords', [])
+        title = story_data.get('title', '')
         if keywords:
             if not any(kw.lower() in title.lower() for kw in keywords):
                 continue
         
-        # 檢查是否已下載
-        filename = f"{story_id}.txt"
-        filepath = os.path.join(raw_dir, filename)
-        if os.path.exists(filepath):
-            print(f"Skipping {story_id} (already exists)")
-            continue
-            
-        print(f"Processing Story: {title} ({descendants} comments)")
-        
-        # 抓取留言
-        comments = fetch_comments(story)
-        comments_text = format_comments_to_text(comments)
-        
-        # 寫入檔案
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(f"Title: {title}\n")
-            f.write(f"URL: {url}\n")
-            f.write(f"Score: {score}\n")
-            f.write(f"Comments Count: {descendants}\n")
-            f.write("-" * 20 + "\n")
-            f.write("TOP COMMENTS:\n")
-            f.write(comments_text)
-            
-        processed_count += 1
-        time.sleep(1) # 避免 API 限制
+        if process_story(sid, config, raw_dir):
+            processed_count += 1
+            time.sleep(1) # 避免 API 限制
         
     print(f"Crawler finished. Processed {processed_count} new stories.")
 

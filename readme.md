@@ -43,11 +43,35 @@ monitoring:
 # 啟動監控服務 (會自動觸發過濾與通知)
 python main.py monitor
 
+# 指定特定文章進行抓取與總結 (忽略過濾門檻)
+python main.py all --id 40001234
+python main.py all --url https://news.ycombinator.com/item?id=40001234
+python main.py all --idf ids.txt    # 從檔案讀取多個 ID
+python main.py all --urlf urls.txt  # 從檔案讀取多個網址
+
+# 單次抓取/總結
+python main.py crawl --id 40001234
+python main.py summarize --url https://news.ycombinator.com/item?id=40001234
+
 # 整理舊資料 (壓縮並歸檔)
 python main.py organize
+```
 
-# 手動執行完整抓取流程
-python main.py all
+### 3. 多 LLM 後端設定 (`config.yaml`)
+本專案支援針對不同功能模組設定不同的 LLM Provider (如 OpenAI, Ollama, LM Studio)。
+```yaml
+llm_providers:
+  openai:
+    model: "gpt-3.5-turbo"
+  ollama:
+    model: "ollama/llama3"
+    api_base: "http://localhost:11434"
+
+summarizer:
+  provider: "openai"    # 生成摘要使用 OpenAI
+
+monitoring:
+  provider: "ollama"    # AI 專家評估使用本地 Ollama
 ```
 
 ## 🤖 AI Agent 整合 (Agent Integration)

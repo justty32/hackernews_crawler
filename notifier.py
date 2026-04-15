@@ -114,7 +114,11 @@ def process_new_summary(summary_path):
     """多階段過濾：關鍵字比對 -> 留言數門檻 -> AI 專家檢查 -> 多管道通知"""
     config = load_config()
     mon_cfg = config['monitoring']
-    model_cfg = config['summarizer']
+    
+    # 獲取專屬 LLM 設定 (根據 'monitoring.provider' 決定)
+    from utils.config import get_llm_config
+    model_cfg = get_llm_config(config, 'monitoring')
+    
     rules = mon_cfg['rules']
     
     if not mon_cfg.get('enabled', True):

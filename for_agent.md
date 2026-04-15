@@ -12,11 +12,11 @@ All operations are routed through `main.py`.
 
 | Command | Action | Persistence | Primary Output |
 | :--- | :--- | :--- | :--- |
-| `python main.py crawl` | Fetches top stories and comments. | Single Task | `data/raw/{story_id}.txt` |
-| `python main.py summarize` | Generates summaries for raw data. | Single Task | `data/summary/{YYYY-MM}/summary_{story_id}.txt` |
+| `python main.py crawl [--id ID] [--url URL] [--idf FILE] [--urlf FILE]` | Fetches stories/comments. Manual targets bypass filters. | Single Task | `data/raw/{id}.txt` |
+| `python main.py summarize [--id ID] [--url URL] [--idf FILE] [--urlf FILE]` | Generates summaries. Manual targets force overwrite. | Single Task | `data/summary/{YYYY-MM}/summary_{id}.txt` |
 | `python main.py monitor` | Watches for new summaries and evaluates. | Persistent | `data/notifications/notification_{timestamp}.txt` |
 | `python main.py organize` | Compresses and archives old data. | Single Task | `data/archive/{category}/{id}.zip` |
-| `python main.py all` | Runs `crawl` then `summarize`. | Single Task | Both raw and summary files. |
+| `python main.py all [targets]` | Runs `crawl` then `summarize` for given targets. | Single Task | Both raw and summary files. |
 
 ## 3. Data Schema & Specifications
 
