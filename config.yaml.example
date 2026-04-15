@@ -1,0 +1,55 @@
+paths:
+  raw_dir: "data/raw"
+  summary_dir: "data/summary"
+  archive_dir: "data/archive"
+  notification_dir: "data/notifications"
+
+llm_providers:
+  openai:
+    model: "gpt-3.5-turbo"
+  ollama:
+    model: "ollama/llama3"
+    api_base: "http://localhost:11434"
+  lm_studio:
+    model: "openai/local-model"
+    api_base: "http://localhost:1234/v1"
+
+crawler:
+  top_limit: 10
+  comment_threshold: 10
+  keywords: []
+
+summarizer:
+  provider: "openai"
+  max_tokens: 500
+  temperature: 0.3
+  dynamic_prompts:
+    "AI": "你是專業的 AI 科學家，對於符號 AI 部分多加關注。"
+
+monitoring:
+  enabled: true
+  delay: 1
+  provider: "ollama"
+  rules:
+    title_keywords: ["AI", "Rust"]
+    summary_keywords: []
+    comment_keywords: []
+    min_comments: 10
+    expert_check_prompt: "檢查是否有專業人士的實作經驗分享。"
+  category_prompts:
+    "AI": "請特別檢查文中是否提到實際的測試數據或模型限制。"
+  channels:
+    email:
+      enabled: false
+      recipient: "user@example.com"
+      subject_prefix: "[HN Match] "
+    file:
+      enabled: true
+      output_dir: "data/notifications"
+
+organizer:
+  raw_retention_days: 30
+  summary_retention_days: 90
+  categories:
+    "AI": ["AI", "LLM", "Machine Learning"]
+    "Software": ["Rust", "Python", "Go", "C++"]
