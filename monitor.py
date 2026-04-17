@@ -13,7 +13,7 @@ class SummaryHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
             return
-        if event.src_path.endswith(".txt") and "summary_" in os.path.basename(event.src_path):
+        if event.src_path.endswith(".md") and "summary_" in os.path.basename(event.src_path):
             print(f"New summary detected: {event.src_path}")
             # 延遲一下確保檔案寫入完成
             time.sleep(self.delay)

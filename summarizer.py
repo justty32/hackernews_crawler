@@ -13,7 +13,7 @@ def get_dynamic_prompt(title, dynamic_cfg):
 def check_summary_exists(summary_dir, story_id):
     if not os.path.exists(summary_dir): return False
     for root, dirs, files in os.walk(summary_dir):
-        if f"summary_{story_id}.txt" in files: return True
+        if f"summary_{story_id}.md" in files: return True
     return False
 
 def summarize_text(title, text, model_cfg, dynamic_cfg=None):
@@ -47,7 +47,7 @@ def run_summarizer(story_ids=None, custom_raw_dir=None, force=False):
     
     processed_count = 0
     for filename in raw_files:
-        sid = filename.replace(".md", "")
+        sid = filename.replace(".txt", "")
         # 如果不是強制模式，且已經有總結了，就跳過
         if not force and check_summary_exists(summary_dir, sid): continue
         
