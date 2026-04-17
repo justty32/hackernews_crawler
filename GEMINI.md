@@ -33,6 +33,14 @@ Python 程式專案（含 AI Agent 評估與多管道通知服務）。
 - **穩定性：** AI 評估採手動 JSON 解析，並具備 Markdown 標籤自動清理功能。
 
 ---
+## ✅ 實作進度更新 (2026-04-17)
+- [x] **進階 CLI 參數**：
+    - 支援 `summarize --dir` 指定自定義原始資料夾。
+    - 支援 `summarize --force` 強制重新對資料進行摘要生成。
+    - 支援 `crawl --skip-existing` 在手動指定目標時跳過已抓取的文件。
+- [x] **邏輯優化**：
+    - 統一 `run_crawler` 與 `run_summarizer` 的行為參數化，增強自動化調度靈活性。
+---
 ## ✅ 實作進度更新 (2026-04-15)
 - [x] **批量處理 (Batch Processing)**：
     - 支援透過 `--id` (多個 ID) 與 `--url` (多個網址) 指定文章。

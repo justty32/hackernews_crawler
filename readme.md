@@ -43,18 +43,15 @@ monitoring:
 # 啟動監控服務 (會自動觸發過濾與通知)
 python main.py monitor
 
-# 指定特定文章進行抓取與總結 (忽略過濾門檻)
-python main.py all --id 40001234
-python main.py all --url https://news.ycombinator.com/item?id=40001234
-python main.py all --idf ids.txt    # 從檔案讀取多個 ID
-python main.py all --urlf urls.txt  # 從檔案讀取多個網址
+# 指定特定文章進行抓取與總結
+python main.py crawl --id 40001234 --skip-existing  # 手動抓取並跳過已存在的檔案
+python main.py summarize --id 40001234 --force      # 強制重新生成指定 ID 的摘要
+python main.py summarize --dir custom_data/         # 指定從特定目錄讀取原始資料進行總結
+python main.py all --id 40001234 --skip-existing    # 抓取(跳過重複)後直接總結
 
-# 單次抓取/總結
-python main.py crawl --id 40001234
-python main.py summarize --url https://news.ycombinator.com/item?id=40001234
-
-# 整理舊資料 (壓縮並歸檔)
-python main.py organize
+# 單次抓取/總結 (更多參數可使用 --help 查看)
+python main.py crawl --url https://news.ycombinator.com/item?id=40001234
+python main.py summarize --force                    # 強制重新掃描並總結所有原始資料
 ```
 
 ### 3. 多 LLM 後端設定 (`config.yaml`)

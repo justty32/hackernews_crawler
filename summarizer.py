@@ -35,22 +35,30 @@ def summarize_text(title, text, model_cfg, dynamic_cfg=None):
     """
     return call_llm(model_cfg, prompt)
 
-def run_summarizer(story_ids=None):
+def run_summarizer(story_ids=None, custom_raw_dir=None, force=False):
     config = load_config()
-    raw_dir, summary_dir = config['paths']['raw_dir'], config['paths']['summary_dir']
+    raw_dir = custom_raw_dir if custom_raw_dir else config['paths']['raw_dir']
+    summary_dir = config['paths']['summary_dir']
     model_cfg = get_llm_config(config, 'summarizer')
     os.makedirs(summary_dir, exist_ok=True)
     
+    if not os.path.exists(raw_dir):
+        print(f"Error: Raw directory '{raw_dir}' does not exist.")
+        return
+
     raw_files = [f"{sid}.txt" for sid in story_ids] if story_ids else \
                 [f for f in os.listdir(raw_dir) if f.endswith(".txt")]
     
     processed_count = 0
     for filename in raw_files:
         sid = filename.replace(".txt", "")
-        if not story_ids and check_summary_exists(summary_dir, sid): continue
+        # 如果不是強制模式，且已經有總結了，就跳過
+        if not force and check_summary_exists(summary_dir, sid): continue
         
         raw_path = os.path.join(raw_dir, filename)
-        if not os.path.exists(raw_path): continue
+        if not os.path.exists(raw_path):
+            if story_ids: print(f"Warning: File {raw_path} not found.")
+            continue
 
         with open(raw_path, "r", encoding="utf-8") as f:
             content = f.read()

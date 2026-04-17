@@ -43,6 +43,9 @@ def main():
     parser.add_argument("--url", type=str, nargs='+', help="指定要抓取的 Hacker News 網址 (可多個)")
     parser.add_argument("--idf", "--ids_from_file", type=str, nargs='+', help="從檔案讀取 Story IDs (每行一個)")
     parser.add_argument("--urlf", "--urls_from_file", type=str, nargs='+', help="從檔案讀取 HN 網址 (每行一個)")
+    parser.add_argument("--dir", type=str, help="指定原始資料目錄 (僅用於 summarize 模式)")
+    parser.add_argument("--force", action="store_true", help="強制重新總結 (僅用於 summarize 模式)")
+    parser.add_argument("--skip-existing", action="store_true", help="抓取時跳過已存在的檔案 (僅用於手動指定 ID 時)")
     
     args = parser.parse_args()
     
@@ -81,9 +84,9 @@ def main():
     target_ids = list(dict.fromkeys(target_ids)) if target_ids else None
     
     if args.mode == "crawl":
-        run_crawler(story_ids=target_ids)
+        run_crawler(story_ids=target_ids, force=not args.skip_existing)
     elif args.mode == "summarize":
-        run_summarizer(story_ids=target_ids)
+        run_summarizer(story_ids=target_ids, custom_raw_dir=args.dir, force=args.force)
     elif args.mode == "monitor":
         run_monitor()
     elif args.mode == "organize":
@@ -91,8 +94,8 @@ def main():
         run_organizer()
     elif args.mode == "all":
         print(f"Starting sequential execution: crawl -> summarize {'(Target IDs: ' + str(target_ids) + ')' if target_ids else ''}")
-        run_crawler(story_ids=target_ids)
-        run_summarizer(story_ids=target_ids)
+        run_crawler(story_ids=target_ids, force=not args.skip_existing)
+        run_summarizer(story_ids=target_ids, custom_raw_dir=args.dir, force=args.force)
         print("Done. To start monitoring, use 'python main.py monitor'.")
 
 if __name__ == "__main__":

@@ -31,15 +31,15 @@ def process_story(story_id, config, raw_dir, force=False):
         f.write("-" * 20 + "\nTOP COMMENTS:\n" + comments_text)
     return True
 
-def run_crawler(story_ids=None):
+def run_crawler(story_ids=None, force=True):
     config = load_config()
     raw_dir = config['paths']['raw_dir']
     os.makedirs(raw_dir, exist_ok=True)
     
     if story_ids:
-        print(f"Fetching targeted IDs: {story_ids}")
+        print(f"Fetching targeted IDs: {story_ids} (force={force})")
         for sid in story_ids:
-            process_story(sid, config, raw_dir, force=True)
+            process_story(sid, config, raw_dir, force=force)
             time.sleep(1)
         return
 
