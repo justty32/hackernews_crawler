@@ -37,7 +37,7 @@ def send_email(subject, body, email_cfg):
 def save_to_file(subject, body, output_dir):
     """將通知內容存入指定資料夾"""
     os.makedirs(output_dir, exist_ok=True)
-    filename = f"notification_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    filename = f"notification_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
     filepath = os.path.join(output_dir, filename)
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(f"Subject: {subject}\n")

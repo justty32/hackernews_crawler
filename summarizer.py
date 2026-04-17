@@ -27,10 +27,6 @@ def summarize_text(title, text, model_cfg, dynamic_cfg=None):
     留言內容:
     {truncated_text}
     
-    要求:
-    1. 列出 3-5 個核心觀點。
-    2. 總結社群氛圍。
-    3. 300 字以內。
     {extra_instruction}
     """
     return call_llm(model_cfg, prompt)
@@ -51,7 +47,7 @@ def run_summarizer(story_ids=None, custom_raw_dir=None, force=False):
     
     processed_count = 0
     for filename in raw_files:
-        sid = filename.replace(".txt", "")
+        sid = filename.replace(".md", "")
         # 如果不是強制模式，且已經有總結了，就跳過
         if not force and check_summary_exists(summary_dir, sid): continue
         
@@ -71,8 +67,8 @@ def run_summarizer(story_ids=None, custom_raw_dir=None, force=False):
             month_str = datetime.now().strftime("%Y-%m")
             target_dir = os.path.join(summary_dir, month_str)
             os.makedirs(target_dir, exist_ok=True)
-            with open(os.path.join(target_dir, f"summary_{sid}.txt"), "w", encoding="utf-8") as f:
-                f.write(f"Original Story: {title}\nStory ID: {sid}\nGenerated at: {datetime.now()}\n" + "-"*20 + "\n" + summary)
+            with open(os.path.join(target_dir, f"summary_{sid}.md"), "w", encoding="utf-8") as f:
+                f.write(summary + f"## MetaInfo\n---\nOriginal Story: {title}\nStory ID: {sid}\nGenerated at: {datetime.now()}\n" + "-"*20 + "\n")
             processed_count += 1
             time.sleep(1)
             

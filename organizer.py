@@ -28,7 +28,7 @@ def archive_files(source_dir, days_threshold, archive_root, categories_cfg, pref
     files_to_archive = []
     for root, dirs, files in os.walk(source_dir):
         for filename in files:
-            if not filename.endswith(".txt"):
+            if not filename.endswith(".md") and not filename.endswith(".txt"):
                 continue
             filepath = os.path.join(root, filename)
             if get_file_age_days(filepath) >= days_threshold:
