@@ -80,6 +80,30 @@ All operations are routed through `main.py`.
 - **"Error: Raw directory ... does not exist"**: Occurs when using `--dir` with an invalid path.
 
 ## 6. Best Practices for AI Agents
-- **Token Management**: Always use `--skip-existing` and avoid `--force` unless prompts have changed.
-- **Encoding**: The system uses `UTF-8`. Ensure your environment variables `PYTHONIOENCODING=utf-8` are set on Windows.
-- **Rate Limiting**: The system includes a 1-second sleep between items. Do not remove this to prevent IP bans from HN or Rate Limits from LLM providers.
+
+### 6.1 Environment & Encoding (Critical for Windows)
+- **YAML Encoding**: When modifying `config.yaml` or `.env` on Windows via CLI tools (like PowerShell `Set-Content`), ensure the file encoding remains `UTF-8`. 
+  - **Avoid**: Direct redirects or PowerShell cmdlets that default to UTF-16.
+  - **Recommended**: Use built-in agent tools like `write_file` or `replace` to maintain structural integrity and correct encoding.
+- **Python Environment**: Ensure `PYTHONIOENCODING=utf-8` is set to prevent `UnicodeDecodeError` when processing non-English HN titles.
+
+### 6.2 Workflow Optimization
+- **Prefer `all` for Manual Targets**: When processing a list of URLs/IDs via `--urlf` or `--idf`, always prefer `python main.py all`. 
+  - Why? `summarize` mode alone will fail if the raw data hasn't been fetched yet. `all` ensures the `crawl` -> `summarize` chain is intact for the specific targets.
+- **Resuming Interrupted Jobs**: If a bulk job is interrupted (e.g., by a Rate Limit), re-run with `--skip-existing` (for crawl) and without `--force` (for summarize) to resume from where it left off without wasting tokens.
+
+### 6.3 LLM Provider & Rate Limit Management
+- **Switching Providers**: You can hot-swap the LLM by updating the `summarizer.provider` in `config.yaml`. The system supports `openai`, `google`, `ollama`, and `lm_studio`.
+- **Handling `RateLimitError`**: 
+  - **Free Tiers**: Models like `gemini-2.0-flash` (Free Tier) have strict daily/RPM limits.
+  - **Strategy**: If you hit a `RESOURCE_EXHAUSTED` error, either wait for the cooldown or rotate the `GEMINI_API_KEY` in `.env`.
+- **Token Management**: Truncation logic is active (8000 tokens for context), but large comment sections still consume significant input tokens.
+
+## 7. Error Codes & Diagnostics
+- **Exit Code 0**: Success.
+- **Exit Code 1**: General Error. Common causes:
+  - `UnicodeDecodeError`: Check `config.yaml` encoding.
+  - `FileNotFoundError`: Raw data missing (use `all` mode).
+  - `RateLimitError`: LLM quota exceeded.
+- **"Skipping {id}"**: Item already exists (normal optimization).
+

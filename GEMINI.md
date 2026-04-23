@@ -25,12 +25,25 @@ Python 程式專案（含 AI Agent 評估與多管道通知服務）。
   - `monitoring.rules`: 設定基礎過濾規則。
   - `monitoring.category_prompts`: 設定特定領域的 AI 專家評估指令。
   - `organizer`: 設定資料封存天數與分類關鍵字。
-- **`.env`**: 存放 API Keys 與 SMTP 憑證。
+- **`.env`**: 存放 API Keys 與 SMTP 憑證（如 `GEMINI_API_KEY` 或 `GOOGLE_API_KEY`）。
 
 ## 開發規範 (Development Conventions)
 - **通知內容：** 必須包含文章標題、HN 連結、留言數、AI 評估原因及總結內容。
 - **擴充性：** 通知邏輯集中於 `notifier.py`，便於未來整合其他 Webhook 或 API。
-- **穩定性：** AI 評估採手動 JSON 解析，並具備 Markdown 標籤自動清理功能。
+- **穩定性與相容性：** 
+    - AI 評估採手動 JSON 解析，並具備 Markdown 標籤自動清理功能。
+    - 在 Windows 環境下，`config.yaml` 必須確保以 `UTF-8` 編碼保存，以避免 `UnicodeDecodeError`。
+    - 支援 `LiteLLM` 作為統一調用介面，可無縫切換多個 LLM Provider。
+
+---
+## ✅ 實作進度更新 (2026-04-23)
+- [x] **Google Gemini 深度整合**：
+    - 透過 `LiteLLM` 完成 `gemini-2.0-flash` (及 2.5 系列預備) 之總結介面對接。
+    - 支援透過 `.env` 進行 API Key 快速熱替換以應對 Rate Limit。
+- [x] **批量工作流優化**：
+    - 確立 `python main.py all --urlf [FILE]` 為批次指定網址時的最佳實踐（確保先抓取後總結）。
+- [x] **環境容錯增強**：
+    - 解決 Windows 下 PowerShell 重導向導致的 YAML 編碼問題，統一規範為純 UTF-8 操作。
 
 ---
 ## ✅ 實作進度更新 (2026-04-17)
