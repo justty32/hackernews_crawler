@@ -14,7 +14,8 @@ def call_llm(model_cfg, prompt, system_prompt=None):
             messages=messages,
             api_base=model_cfg.get('api_base'),
             max_tokens=model_cfg.get('max_tokens', 500),
-            temperature=model_cfg.get('temperature', 0.3)
+            temperature=model_cfg.get('temperature', 0.3),
+            num_retries=3
         )
         return response.choices[0].message.content
     except Exception as e:
